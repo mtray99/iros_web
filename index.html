@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>법인등기 열람 자동신청</title>
+<style>
+:root{
+  --bg:#f5f6f4; --panel:#fff; --ink:#1c2830; --sub:#5d6b73; --line:#d9ddd9;
+  --accent:#1f5c5b; --accent-ink:#fff; --seal:#b3362b; --ok:#2e7d4f; --warn:#9a6a00;
+  --ok-bg:#e3f1e8; --warn-bg:#fbf0d2; --err-bg:#f8dcd8; --log-bg:#18232a; --log-ink:#cfe0dc;
+}
+@media (prefers-color-scheme:dark){
+  :root{--bg:#12191d; --panel:#1b252b; --ink:#e6ecea; --sub:#93a3a9; --line:#2f3d44;
+    --accent:#5fb3ae; --accent-ink:#0d1517; --seal:#e0705f; --ok:#6cc58d; --warn:#e3b74a;
+    --ok-bg:#1d3a2a; --warn-bg:#3b3216; --err-bg:#442422; --log-bg:#0c1215;}
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font:15px/1.55 "Pretendard","Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif}
+header{padding:28px 32px 8px;max-width:1180px;margin:auto}
+h1{font:700 26px/1.25 "Noto Serif KR","Batang","AppleMyungjo",serif;margin:0 0 4px;letter-spacing:-.01em}
+header p{margin:0;color:var(--sub)}
+main{max-width:1180px;margin:auto;padding:12px 32px 48px;display:grid;gap:20px}
+section{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:20px 22px}
+h2{font-size:16px;margin:0 0 14px}
+.grid{display:grid;grid-template-columns:1.1fr 1fr;gap:20px}
+@media(max-width:860px){.grid{grid-template-columns:1fr}header,main{padding-inline:16px}}
+#drop{border:1.5px dashed var(--line);border-radius:6px;padding:26px 16px;text-align:center;cursor:pointer;color:var(--sub)}
+#drop.over,#drop.has{border-color:var(--accent);color:var(--ink)}
+#drop b{display:block;font-size:15px;color:var(--ink)}
+label.f{display:block;margin:12px 0 4px;font-weight:600;font-size:13px}
+input[type=text],input[type=password],input[type=number],select{
+  width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:5px;background:var(--bg);color:var(--ink);font:inherit}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.chk{display:flex;gap:8px;align-items:flex-start;margin:10px 0 0;font-size:14px}
+.chk input{margin-top:4px}
+.hint{color:var(--sub);font-size:12.5px;margin:3px 0 0}
+button{font:inherit;cursor:pointer;border-radius:5px;padding:9px 16px;border:1px solid var(--line);background:var(--panel);color:var(--ink)}
+button.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:600}
+button.danger{color:var(--seal);border-color:var(--seal)}
+button:disabled{opacity:.45;cursor:not-allowed}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btns{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+.notice{border-left:4px solid var(--seal);background:var(--err-bg);padding:10px 14px;border-radius:0 5px 5px 0;font-size:13.5px}
+.stage{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap}
+.stage span{padding:4px 12px;border:1px solid var(--line);border-radius:99px;font-size:13px;color:var(--sub)}
+.stage span.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:600}
+.stage span.past{color:var(--ok);border-color:var(--ok)}
+#banner{display:none;padding:12px 14px;border-radius:5px;background:var(--warn-bg);border:1px solid var(--warn);margin-bottom:12px}
+#banner.show{display:block}
+.bar{height:8px;background:var(--line);border-radius:99px;overflow:hidden;margin:4px 0 6px}
+.bar i{display:block;height:100%;width:0;background:var(--accent);transition:width .3s}
+.meta{display:flex;justify-content:space-between;color:var(--sub);font-size:13px}
+.tablewrap{max-height:420px;overflow:auto;border:1px solid var(--line);border-radius:6px}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{padding:6px 10px;text-align:left;border-bottom:1px solid var(--line);white-space:nowrap}
+td.note{white-space:normal;min-width:240px;color:var(--sub)}
+th{position:sticky;top:0;background:var(--bg);z-index:1}
+.tag{display:inline-block;padding:1px 8px;border-radius:99px;font-size:12px}
+.tag.ok{background:var(--ok-bg);color:var(--ok)} .tag.warn{background:var(--warn-bg);color:var(--warn)} .tag.err{background:var(--err-bg);color:var(--seal)}
+#log{background:var(--log-bg);color:var(--log-ink);font:12.5px/1.5 ui-monospace,Consolas,"D2Coding",monospace;
+  padding:12px;border-radius:6px;height:220px;overflow:auto;white-space:pre-wrap;margin:0}
+.times{display:flex;gap:22px;flex-wrap:wrap;font-size:13px;color:var(--sub);margin:0 0 10px;font-variant-numeric:tabular-nums}
+.times b{color:var(--ink);font-weight:600}
+.counts{display:flex;gap:22px;margin:4px 0 12px;flex-wrap:wrap}
+.counts div{font-size:13px;color:var(--sub)} .counts b{display:block;font-size:22px;color:var(--ink)}
+</style>
+</head>
+<body>
+<header>
+  <h1>법인등기 열람 자동신청</h1>
+  <p>회사명·대표자 엑셀 → 법인등록번호 조회 → 인터넷등기소 결제대상 목록에 담기</p>
+</header>
+<main>
+  <div class="grid">
+    <section>
+      <h2>1. 엑셀 첨부</h2>
+      <div id="drop" tabindex="0" role="button" aria-label="엑셀 파일 선택">
+        <b id="dropTitle">엑셀 파일을 끌어놓거나 클릭해서 선택</b>
+        <span id="dropSub">회사명 열과 대표자(또는 이름) 열이 있는 .xlsx</span>
+        <input id="file" type="file" accept=".xlsx,.xls" hidden>
+      </div>
+      <label class="f" for="apikey">공공데이터포털 API 키</label>
+      <input id="apikey" type="password" placeholder="비워두면 환경변수 DATA_GO_KR_KEY 또는 key.txt 사용" autocomplete="off">
+      <p class="hint">키는 이 PC의 서버 메모리에서만 쓰이며 파일·로그에 남기지 않습니다. 이미 '확정'된 행이 많으면 키 없이도 신청 단계만 진행됩니다.</p>
+    </section>
+
+    <section>
+      <h2>2. 옵션</h2>
+      <label class="f" for="items">체크할 항목 행 (선택)</label>
+      <input id="items" type="text" placeholder="비우면 기본값 12">
+      <p class="hint">'일부'를 클릭한 뒤 항목 목록에서 체크할 행 번호입니다. 여러 개면 12,14 처럼 쉼표로 적습니다.</p>
+      <label class="chk"><input id="pick_first" type="checkbox"><span>검색 결과 행이 여럿이면 첫 후보 자동 선택<br><span class="hint">끄면 '행다수-수동확인'으로 표시하고 건너뜁니다.</span></span></label>
+      <label class="chk"><input id="crno_only" type="checkbox"><span>법인등록번호 조회만 (브라우저를 열지 않음)</span></label>
+      <div class="btns"><button id="start" class="primary" disabled>시작</button></div>
+    </section>
+  </div>
+
+  <section id="runbox" hidden>
+    <h2>3. 진행 상황</h2>
+    <div class="stage" id="stage"></div>
+    <div id="banner"><b id="bannerText"></b>
+      <div class="btns" id="bannerBtns"></div></div>
+    <div class="meta"><span id="progLabel"></span><span id="progNum"></span></div>
+    <div class="bar"><i id="bar"></i></div>
+    <div class="times" id="times"></div>
+    <div class="counts">
+      <div><b id="cTotal">0</b>전체 행</div><div><b id="cOk">0</b>등록번호 확정</div><div><b id="cDone">0</b>결제대기(담기 완료)</div>
+    </div>
+    <div class="btns" style="margin:0 0 14px">
+      <button id="stop" class="danger">중지</button>
+      <button id="download" disabled>결과 엑셀 받기</button>
+    </div>
+    <div class="tablewrap"><table>
+      <thead><tr><th>회사명</th><th>대표자</th><th>법인등록번호</th><th>등록번호 판정</th><th>신청 상태</th><th>비고 / 후보</th></tr></thead>
+      <tbody id="rows"></tbody></table></div>
+    <h2 style="margin-top:18px">실행 로그</h2>
+    <pre id="log"></pre>
+  </section>
+
+  <div class="notice">로그인(아이디·자동입력방지문자)과 <b>결제는 항상 직접</b> 하셔야 합니다. 이 프로그램은 결제 버튼을 누르지 않고 결제대상 목록에 담기까지만 합니다. 인터넷등기소 화면이 바뀌면 동작이 멈출 수 있으니, 처음에는 '처음 N건만'과 '시험 실행'으로 확인하세요.</div>
+</main>
+
+<script>
+const $ = id => document.getElementById(id);
+let since = 0, rev = -1, timer = null, file = null;
+const STAGES = [["lookup","등록번호 조회"],["wait_login","로그인"],["apply","신청 담기"],["wait_pay","결제(직접)"]];
+const ORDER = {lookup:0, wait_login:1, apply:2, wait_batch:2, wait_pay:3, done:4, stopped:4, error:4};
+
+const drop = $("drop");
+drop.onclick = () => $("file").click();
+drop.onkeydown = e => (e.key==="Enter"||e.key===" ") && $("file").click();
+drop.ondragover = e => {e.preventDefault(); drop.classList.add("over")};
+drop.ondragleave = () => drop.classList.remove("over");
+drop.ondrop = e => {e.preventDefault(); drop.classList.remove("over"); setFile(e.dataTransfer.files[0])};
+$("file").onchange = e => setFile(e.target.files[0]);
+function setFile(f){
+  if(!f) return; file = f; drop.classList.add("has");
+  $("dropTitle").textContent = f.name; $("dropSub").textContent = (f.size/1024).toFixed(0)+" KB";
+  $("start").disabled = false;
+}
+
+$("start").onclick = async () => {
+  const fd = new FormData();
+  fd.append("file", file);
+  fd.append("api_key", $("apikey").value);
+  fd.append("items", $("items").value);
+  for (const k of ["pick_first","crno_only"]) fd.append(k, $(k).checked ? "1" : "0");
+  $("start").disabled = true;
+  const r = await fetch("/api/start", {method:"POST", body:fd});
+  const j = await r.json();
+  if(!r.ok){ alert(j.error); $("start").disabled = false; return; }
+  since = 0; rev = -1; $("log").textContent = ""; $("rows").innerHTML = "";
+  $("runbox").hidden = false; $("runbox").scrollIntoView({behavior:"smooth"});
+  clearInterval(timer); timer = setInterval(poll, 1000); poll();
+};
+const act = a => fetch("/api/action", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({action:a})});
+$("stop").onclick = () => confirm("진행을 중지할까요? 이미 담은 건은 결제대상 목록에 남습니다.") && act("stop");
+$("download").onclick = () => location.href = "/api/download";
+
+function tagFor(t){
+  if(!t) return "";
+  const cls = /^(확정|결제대기)/.test(t) ? "ok" : /(오류|없음|불일치|다수|중복)/.test(t) ? "err" : "warn";
+  return `<span class="tag ${cls}">${esc(t)}</span>`;
+}
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+const fmt = t => { t = Math.max(0, Math.round(t)); const h = Math.floor(t/3600), m = Math.floor(t%3600/60), x = t%60;
+  return (h ? h+":"+String(m).padStart(2,"0") : m)+":"+String(x).padStart(2,"0"); };
+function renderTimes(s){
+  const names = {lookup:"등록번호 조회", apply:"신청 담기"}, out = [];
+  for (const k of ["lookup","apply"]){
+    const t = s.times[k], run = s.timing.includes(k);
+    if (!t && !run) continue;
+    let txt = `<b>${fmt(t)}</b>`;
+    if (run && s.prog.done > 0 && s.prog.total > s.prog.done)       // 현재 진행 단계만 남은 시간 추정
+      txt += ` · 남은 약 ${fmt(t / s.prog.done * (s.prog.total - s.prog.done))}`;
+    else if (!run) txt += " (완료)";
+    out.push(`<span>${names[k]} ${txt}</span>`);
+  }
+  $("times").innerHTML = out.join("");
+}
+async function poll(){
+  let s;
+  try { s = await (await fetch(`/api/status?since=${since}&rev=${rev}`)).json(); } catch { return; }
+  if (s.log.length){
+    const el = $("log"), atEnd = el.scrollTop + el.clientHeight >= el.scrollHeight - 30;
+    el.textContent += s.log.join("\n") + "\n"; since = s.logn;
+    if (atEnd) el.scrollTop = el.scrollHeight;
+  }
+  if (s.rows){
+    rev = s.rev;
+    $("rows").innerHTML = s.rows.map(r =>
+      `<tr><td>${esc(r[0])}</td><td>${esc(r[1])}</td><td>${esc(r[2])}</td><td>${tagFor(r[3])}</td><td>${tagFor(r[4])}</td><td class="note">${esc(r[5])}</td></tr>`).join("");
+    $("cTotal").textContent = s.counts.total; $("cOk").textContent = s.counts.ok; $("cDone").textContent = s.counts.done;
+  }
+  const cur = ORDER[s.phase] ?? -1;
+  $("stage").innerHTML = STAGES.map(([k,t],i) => `<span class="${i===cur?"on":i<cur?"past":""}">${t}</span>`).join("");
+  const p = s.prog; $("progLabel").textContent = p.label; $("progNum").textContent = p.total ? `${p.done} / ${p.total}` : "";
+  $("bar").style.width = p.total ? (100*p.done/p.total)+"%" : "0";
+  $("download").disabled = !s.can_download;
+  renderTimes(s);
+
+  const b = $("banner"), btns = $("bannerBtns"); btns.innerHTML = "";
+  const addBtn = (label, a, primary=true) => { const x = document.createElement("button");
+    x.textContent = label; if(primary) x.className = "primary"; x.onclick = () => { act(a); x.disabled = true }; btns.append(x); };
+  const show = {wait_login:["login_done","로그인 완료"], wait_batch:["resume","결제 마쳤어요 · 계속"], wait_pay:["finish","종료 (브라우저 닫기)"]}[s.phase];
+  if (show){ b.classList.add("show"); $("bannerText").textContent = s.msg; addBtn(show[1], show[0]); }
+  else if (s.phase==="error"){ b.classList.add("show"); $("bannerText").textContent = "오류: " + s.msg; }
+  else if (s.phase==="done"||s.phase==="stopped"){ b.classList.add("show"); $("bannerText").textContent = s.msg; }
+  else b.classList.remove("show");
+  $("stop").disabled = !s.running;
+  if (!s.running){ clearInterval(timer); $("start").disabled = !file; }
+}
+</script>
+</body>
+</html>
